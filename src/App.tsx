@@ -1,6 +1,6 @@
 import FunnelOne from "./components/FunnelOne";
 import VerticalBarFunnel from "./components/VerticalBarFunnel";
-import ProductFunnel from "./components/ProductFunnel";
+import FunnelTwo from "./components/FunnelTwo";
 import type { FunnelData } from "./types/funnel";
 import "./App.css";
 
@@ -26,7 +26,7 @@ function App() {
 
         {/* Funnel 3: Product Funnel (Purple column chart) */}
         <section className='funnel-section'>
-          <ProductFunnel data={funnelData} />
+          <FunnelTwo data={funnelData} />
         </section>
       </main>
     </div>

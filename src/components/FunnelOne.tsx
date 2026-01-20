@@ -6,7 +6,7 @@ interface ConversionBreakdownFunnelProps {
   data: FunnelData[];
 }
 
-export default function ConversionBreakdownFunnel({ data }: ConversionBreakdownFunnelProps) {
+export default function FunnelOne({ data }: ConversionBreakdownFunnelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const maxValue = Math.max(...data.map((d) => d.value));
