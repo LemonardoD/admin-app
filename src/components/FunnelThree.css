@@ -156,7 +156,7 @@
 
 .vbf-bar {
   width: 100%;
-  background: linear-gradient(180deg, #A78BFA 0%, #8B5CF6 100%);
+  background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
   border-radius: 8px 8px 0 0;
   display: flex;
   align-items: flex-start;

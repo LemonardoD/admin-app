@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FunnelData } from "../types/funnel";
 import "./FunnelTwo.css";
 
-interface ProductFunnelProps {
+interface FunnelTwoProps {
   data: FunnelData[];
 }
 
@@ -23,7 +23,7 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-export default function FunnelTwo({ data }: ProductFunnelProps) {
+export default function FunnelTwo({ data }: FunnelTwoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });

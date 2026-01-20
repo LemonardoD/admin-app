@@ -1,11 +1,11 @@
 import type { FunnelData } from "../types/funnel";
 import "./FunnelThree.css";
 
-interface VerticalBarFunnelProps {
+interface FunnelThreeProps {
   data: FunnelData[];
 }
 
-export default function VerticalBarFunnel({ data }: VerticalBarFunnelProps) {
+export default function FunnelThree({ data }: FunnelThreeProps) {
   const maxValue = data[0]?.value || 1;
 
   // Calculate conversion percentages

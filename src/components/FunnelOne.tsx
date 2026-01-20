@@ -2,11 +2,11 @@ import type { FunnelData } from "../types/funnel";
 import { useEffect, useRef } from "react";
 import "./FunnelOne.css";
 
-interface ConversionBreakdownFunnelProps {
+interface FunnelOneProps {
   data: FunnelData[];
 }
 
-export default function FunnelOne({ data }: ConversionBreakdownFunnelProps) {
+export default function FunnelOne({ data }: FunnelOneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const maxValue = Math.max(...data.map((d) => d.value));
