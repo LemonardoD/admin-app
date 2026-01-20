@@ -1,0 +1,190 @@
+.product-funnel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.pf-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.pf-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.pf-legend-dot {
+  width: 12px;
+  height: 12px;
+  background: #8B5CF6;
+  border-radius: 3px;
+}
+
+.pf-legend-text {
+  color: #6b7280;
+}
+
+.pf-legend-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.pf-chart-container {
+  display: flex;
+  gap: 16px;
+}
+
+.pf-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 8px 40px 0;
+  font-size: 12px;
+  color: #9ca3af;
+  min-width: 40px;
+  text-align: right;
+  height: 300px;
+}
+
+.pf-chart {
+  flex: 1;
+  position: relative;
+  height: 340px;
+}
+
+.pf-grid-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pf-grid-line {
+  width: 100%;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.pf-grid-line-dashed {
+  background: transparent;
+  border-top: 1px dashed #d1d5db;
+}
+
+.pf-bars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 300px;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding: 0 40px;
+}
+
+.pf-bar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 180px;
+}
+
+.pf-bar-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 120px;
+  height: 300px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.pf-bar-background {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border-radius: 4px 4px 0 0;
+}
+
+.pf-bar {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(180deg, #8B5CF6 0%, #7C3AED 100%);
+  border-radius: 4px 4px 0 0;
+  min-height: 30px;
+  transition: height 0.3s ease;
+}
+
+.pf-bar-tooltip {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.pf-bar-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #fff;
+}
+
+.pf-tooltip-percent {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  font-family: monospace;
+}
+
+.pf-tooltip-value {
+  font-size: 12px;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.pf-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.pf-step-number {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.pf-step-name {
+  color: #1f2937;
+  font-weight: 600;
+}
