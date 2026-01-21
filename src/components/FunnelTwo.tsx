@@ -26,7 +26,15 @@ const formatNumber = (num: number): string => {
 export default function FunnelTwo({ data }: FunnelTwoProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const [hoveredConnection, setHoveredConnection] = useState<number | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({
+    x: 0,
+    y: 0,
+    type: "",
+    stepIndex: -1,
+    stepData: null as ProcessedStep | null
+  });
 
   const maxValue = data[0]?.value || 1;
 
@@ -48,18 +56,12 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
     };
   });
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setDimensions({ width: rect.width, height: 400 });
-      }
-    };
-
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
+  // Fixed dimensions for scrollable layout
+  const stepCount = processedSteps.length;
+  const fixedStepWidth = 180;
+  const paddingY = 90;
+  const width = stepCount * fixedStepWidth + paddingY;
+  const height = 400;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -69,104 +71,112 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = dimensions.width * dpr;
-    canvas.height = dimensions.height * dpr;
+
+    // reset transform to avoid stacking scales
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
-    ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+    ctx.clearRect(0, 0, width, height);
 
     const stepCount = processedSteps.length;
-    if (stepCount === 0) return;
+    if (!stepCount) return;
 
-    const paddingLeft = 60;
-    const paddingRight = 60;
     const paddingTop = 60;
     const chartHeight = 280;
-    const barWidth = 80;
-    const availableWidth = dimensions.width - paddingLeft - paddingRight;
+
+    const availableWidth = width - paddingY;
     const stepWidth = availableWidth / stepCount;
+
+    const barWidth = fixedStepWidth / 2.5;
     const baselineY = paddingTop + chartHeight;
 
-    // bar positions and heights
-    const bars: { x: number; y: number; width: number; height: number; centerX: number }[] = [];
+    const bars: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      centerX: number;
+      radius: number;
+    }[] = [];
 
     for (let i = 0; i < stepCount; i++) {
       const step = processedSteps[i];
-      const centerX = paddingLeft + stepWidth * i + stepWidth / 2;
-      const barHeight = (step.percent / 100) * chartHeight;
-      const barX = centerX - barWidth / 2;
-      const barY = baselineY - barHeight;
+      const centerX = paddingY / 2 + stepWidth * i + stepWidth / 2;
+      const height = (step.percent / 100) * chartHeight;
+      const x = centerX - barWidth / 2;
+      const y = baselineY - height;
+      const radius = Math.min(8, height / 2);
 
-      bars.push({ x: barX, y: barY, width: barWidth, height: barHeight, centerX });
+      bars.push({ x, y, width: barWidth, height, centerX, radius });
     }
 
-    // Curved connections between bars
+    /* ================= FUNNEL SHAPE ================= */
+
     if (bars.length > 1) {
       ctx.beginPath();
 
-      // Start from bottom-left of first bar
-      ctx.moveTo(bars[0].x, bars[0].y + bars[0].height);
+      // bottom-left
+      ctx.moveTo(bars[0].x, baselineY);
 
-      // Draw up along first bar to top-left
-      ctx.lineTo(bars[0].x, bars[0].y);
+      // up first bar
+      ctx.lineTo(bars[0].x, bars[0].y + bars[0].radius);
+      ctx.quadraticCurveTo(bars[0].x, bars[0].y, bars[0].x + bars[0].radius, bars[0].y);
 
-      // Draw across tops
+      // top connections
       for (let i = 0; i < bars.length - 1; i++) {
-        const currentBar = bars[i];
-        const nextBar = bars[i + 1];
+        const a = bars[i];
+        const b = bars[i + 1];
 
-        const startX = currentBar.x + currentBar.width;
-        const startY = currentBar.y;
-        const endX = nextBar.x;
-        const endY = nextBar.y;
+        const startX = a.x + a.width - a.radius;
+        const endX = b.x + b.radius;
+        const dx = endX - startX;
+        const cp = dx * 0.5;
 
-        const cp1x = startX + (endX - startX) * 0.4;
-        const cp1y = startY;
-        const cp2x = startX + (endX - startX) * 0.6;
-        const cp2y = endY;
+        ctx.lineTo(startX, a.y);
 
-        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, endX, endY);
+        ctx.bezierCurveTo(startX + cp, a.y, endX - cp, b.y, endX, b.y);
       }
 
-      // Draw down along the last bar to bottom-right
-      const lastBar = bars[bars.length - 1];
-      ctx.lineTo(lastBar.x + lastBar.width, lastBar.y + lastBar.height);
+      // top-right corner of last bar
+      const last = bars[bars.length - 1];
+      ctx.lineTo(last.x + last.width - last.radius, last.y);
+      ctx.quadraticCurveTo(last.x + last.width, last.y, last.x + last.width, last.y + last.radius);
 
-      // Draw bottom edges of bars back to start
-      for (let i = bars.length - 1; i > 0; i--) {
-        const prevBar = bars[i - 1];
-        // Bottom edge of current bar
-        ctx.lineTo(prevBar.x + prevBar.width, prevBar.y + prevBar.height);
-      }
+      // down to baseline
+      ctx.lineTo(last.x + last.width, baselineY);
 
-      // Close path along bottom-left of first bar
-      ctx.lineTo(bars[0].x, bars[0].y + bars[0].height);
-
+      // back along bottom
+      ctx.lineTo(bars[0].x, baselineY);
       ctx.closePath();
 
-      // Fill funnel
-      ctx.fillStyle = "#E9E3FF";
+      const gradient = ctx.createLinearGradient(0, paddingTop, 0, baselineY);
+      gradient.addColorStop(0, "#EFEAFF");
+      gradient.addColorStop(1, "#E2DAFF");
+
+      ctx.fillStyle = gradient;
       ctx.fill();
     }
 
-    // horizontal baseline
+    // --- BASELINE ---
+
     ctx.beginPath();
-    ctx.moveTo(paddingLeft - 20, baselineY);
-    ctx.lineTo(dimensions.width - paddingRight + 20, baselineY);
+    ctx.moveTo(paddingY / 2, baselineY);
+    ctx.lineTo(width - paddingY / 2, baselineY);
     ctx.strokeStyle = "#9F8DE3";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    for (let i = 0; i < bars.length; i++) {
-      const bar = bars[i];
-      const radius = 12;
+    // --- BARS ---
 
+    for (const bar of bars) {
       ctx.beginPath();
       ctx.moveTo(bar.x, baselineY);
-      ctx.lineTo(bar.x, bar.y + radius);
-      ctx.quadraticCurveTo(bar.x, bar.y, bar.x + radius, bar.y);
-      ctx.lineTo(bar.x + bar.width - radius, bar.y);
-      ctx.quadraticCurveTo(bar.x + bar.width, bar.y, bar.x + bar.width, bar.y + radius);
+      ctx.lineTo(bar.x, bar.y + bar.radius);
+      ctx.quadraticCurveTo(bar.x, bar.y, bar.x + bar.radius, bar.y);
+      ctx.lineTo(bar.x + bar.width - bar.radius, bar.y);
+      ctx.quadraticCurveTo(bar.x + bar.width, bar.y, bar.x + bar.width, bar.y + bar.radius);
       ctx.lineTo(bar.x + bar.width, baselineY);
       ctx.closePath();
 
@@ -178,65 +188,185 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
       ctx.stroke();
     }
 
-    // percentage labels
+    // --- LABELS ---
+
     ctx.font = "500 13px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.fillStyle = "#374151";
 
-    for (let i = 0; i < bars.length; i++) {
-      const bar = bars[i];
+    bars.forEach((bar, i) => {
       const step = processedSteps[i];
-      const barText = step.percent === 100 ? formatNumber(step.value) : `${step.percent.toFixed(2)}%`;
-      ctx.fillText(barText, bar.centerX, bar.y - 8);
+      const text = step.percent === 100 ? formatNumber(step.value) : `${step.percent.toFixed(2)}%`;
+
+      ctx.fillText(text, bar.centerX, bar.y - 4);
+    });
+  }, [processedSteps, width]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Scale coordinates to canvas size
+    const scaleX = width / rect.width;
+    const scaleY = height / rect.height;
+    const canvasX = x * scaleX;
+    const canvasY = y * scaleY;
+
+    const stepCount = processedSteps.length;
+    if (!stepCount) return;
+
+    const paddingTop = 60;
+    const chartHeight = 280;
+    const baselineY = paddingTop + chartHeight;
+    const availableWidth = width - paddingY;
+    const stepWidth = availableWidth / stepCount;
+    const barWidth = fixedStepWidth / 2.5;
+
+    // Check if hovering over a bar or label area
+    let foundBar = false;
+    for (let i = 0; i < stepCount; i++) {
+      const centerX = paddingY / 2 + stepWidth * i + stepWidth / 2;
+      const step = processedSteps[i];
+      const barHeight = (step.percent / 100) * chartHeight + 25;
+      const barX = centerX - barWidth / 2;
+      const barY = baselineY - barHeight;
+
+      // Check if hovering over bar
+      if (canvasX >= barX && canvasX <= barX + barWidth && canvasY >= barY && canvasY <= baselineY) {
+        setHoveredBar(i);
+        setHoveredConnection(null);
+        // Position tooltip at top of bar in canvas coordinates
+        const tooltipCanvasX = centerX;
+        // Convert to screen coordinates
+        const screenX = rect.left + tooltipCanvasX / scaleX;
+        const screenY = rect.top + barY / scaleY;
+        setTooltipPosition({
+          x: screenX,
+          y: screenY,
+          type: "bar",
+          stepIndex: i,
+          stepData: step
+        });
+        foundBar = true;
+        break;
+      }
     }
-  }, [processedSteps, dimensions]);
+
+    // Check if hovering over connection area
+    if (!foundBar && stepCount > 1) {
+      for (let i = 0; i < stepCount - 1; i++) {
+        const centerX1 = paddingY / 2 + stepWidth * i + stepWidth / 2;
+        const centerX2 = paddingY / 2 + stepWidth * (i + 1) + stepWidth / 2;
+        const step1 = processedSteps[i];
+        const step2 = processedSteps[i + 1];
+        const height1 = (step1.percent / 100) * chartHeight;
+        const height2 = (step2.percent / 100) * chartHeight;
+        const y1 = baselineY - height1;
+        const y2 = baselineY - height2;
+
+        // Simple rectangular hit detection for connection area
+        const connectionX = centerX1 + barWidth / 2;
+        const connectionWidth = centerX2 - centerX1 - barWidth;
+        const connectionTopY = Math.min(y1, y2);
+        const connectionHeight = Math.abs(y2 - y1) + 20;
+
+        if (
+          canvasX >= connectionX &&
+          canvasX <= connectionX + connectionWidth &&
+          canvasY >= connectionTopY &&
+          canvasY <= connectionTopY + connectionHeight
+        ) {
+          setHoveredConnection(i);
+          setHoveredBar(null);
+          // Position tooltip at baseline center between bars
+          const tooltipCanvasX = (centerX1 + centerX2) / 2;
+          const tooltipCanvasY = baselineY + 10;
+          // Convert to screen coordinates
+          const screenX = rect.left + tooltipCanvasX / scaleX;
+          const screenY = rect.top + tooltipCanvasY / scaleY;
+          setTooltipPosition({
+            x: screenX,
+            y: screenY,
+            type: "connection",
+            stepIndex: i,
+            stepData: step2
+          });
+          foundBar = true;
+          break;
+        }
+      }
+    }
+
+    if (!foundBar) {
+      setHoveredBar(null);
+      setHoveredConnection(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredBar(null);
+    setHoveredConnection(null);
+  };
 
   return (
     <div
-      className='funnel-two-container'
+      className='bg-white rounded-2xl p-6 shadow-sm w-full overflow-x-auto'
       ref={containerRef}
     >
-      <div className='funnel-two-canvas-wrapper'>
+      <div className='w-full relative'>
         <canvas
           ref={canvasRef}
-          className='funnel-two-canvas'
-          style={{ width: dimensions.width, height: dimensions.height }}
+          className='block cursor-crosshair'
+          style={{ width, height }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         />
-      </div>
 
-      {/* Step labels below chart */}
-      <div
-        className='funnel-two-labels'
-        style={{ paddingLeft: 60, paddingRight: 60 }}
-      >
-        {processedSteps.map((step, index) => (
+        {/* Tooltip */}
+        {(hoveredBar !== null || hoveredConnection !== null) && (
           <div
-            key={step.label}
-            className='funnel-two-step-label'
+            className='fixed z-50 pointer-events-none bg-white border border-gray-200 rounded-lg p-2 shadow-lg -translate-x-1/2 -translate-y-full'
+            style={{
+              left: tooltipPosition.x,
+              top: tooltipPosition.y
+            }}
           >
-            <div className='funnel-two-step-name'>{step.label}</div>
-
-            <div className='funnel-two-step-stats'>
-              <div className='funnel-two-stat-row funnel-two-stat-completed'>
-                <span className='funnel-two-stat-arrow'>→</span>
-                <span className='funnel-two-stat-value'>{step.value.toLocaleString()} Users</span>
-                <span className='funnel-two-stat-percent'>({step.completedPercent}%)</span>
-              </div>
-              <div className='funnel-two-stat-description'>{index === 0 ? "Total Active Users" : "Completed this Step"}</div>
-            </div>
-
-            {index > 0 && (
-              <div className='funnel-two-step-stats'>
-                <div className='funnel-two-stat-row funnel-two-stat-dropped'>
-                  <span className='funnel-two-stat-arrow'>↘</span>
-                  <span className='funnel-two-stat-value'>{step.droppedUsers.toLocaleString()} Users</span>
-                  <span className='funnel-two-stat-percent'>({step.droppedPercent}%)</span>
+            {tooltipPosition.type === "bar" && tooltipPosition.stepData && (
+              <div className='flex flex-col items-center gap-0.5 text-center text-xs'>
+                <div className='flex items-center gap-0.5 font-medium text-green-500'>
+                  <span className='text-gray-900'>{tooltipPosition.stepData.value}</span>
+                  <span>→ ({tooltipPosition.stepData.completedPercent}%)</span>
                 </div>
-                <div className='funnel-two-stat-description'>Dropped out</div>
+                <div className='text-gray-500'>{tooltipPosition.stepIndex === 0 ? "Total Active Users" : "Completed this Step"}</div>
+              </div>
+            )}
+            {tooltipPosition.type === "connection" && tooltipPosition.stepData && (
+              <div className='flex flex-col items-center gap-0.5 text-center text-xs'>
+                <div className='flex items-center gap-0.5 text-red-500 font-medium'>
+                  <span className='text-gray-900'>{tooltipPosition.stepData.droppedUsers}</span>
+                  <span>↘ ({tooltipPosition.stepData.droppedPercent}%)</span>
+                </div>
+                <div className='text-gray-500'>Dropped out</div>
               </div>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Step labels below chart */}
+      <div className='flex justify-around mt-4 px-15'>
+        {processedSteps.map((step) => (
+          <span
+            key={step.label}
+            className='text-sm font-semibold text-gray-800'
+          >
+            {step.label}
+          </span>
         ))}
       </div>
     </div>

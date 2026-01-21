@@ -4,6 +4,7 @@
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   width: 100%;
+  overflow-x: auto;
 }
 
 .funnel-two-canvas-wrapper {
@@ -87,4 +88,81 @@
 .funnel-two-stat-description {
   font-size: 12px;
   color: #9ca3af;
+}
+
+.funnel-two-tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  font-size: 13px;
+  min-width: 140px;
+  transform: translateX(-50%) translateY(-100%);
+}
+
+.funnel-two-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.funnel-two-tooltip-stat-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.funnel-two-tooltip-arrow {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.funnel-two-tooltip-completed .funnel-two-tooltip-arrow {
+  color: #22c55e;
+}
+
+.funnel-two-tooltip-completed .funnel-two-tooltip-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.funnel-two-tooltip-completed .funnel-two-tooltip-percent {
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.funnel-two-tooltip-dropped .funnel-two-tooltip-arrow {
+  color: #ef4444;
+}
+
+.funnel-two-tooltip-dropped .funnel-two-tooltip-value {
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.funnel-two-tooltip-dropped .funnel-two-tooltip-percent {
+  color: #ef4444;
+  font-weight: 500;
+}
+
+.funnel-two-tooltip-description {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.funnel-two-canvas-wrapper {
+  width: 100%;
+  position: relative;
+}
+
+.funnel-two-canvas {
+  display: block;
+  cursor: crosshair;
 }
