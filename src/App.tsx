@@ -36,7 +36,7 @@ function App() {
       </div>
 
       <section className='funnel-section'>
-        <FunnelTwo data={[...data, ...data, ...data] || []} />
+        <FunnelTwo data={data || []} />
       </section>
     </main>
   );
