@@ -60,7 +60,7 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
   const stepCount = processedSteps.length;
   const fixedStepWidth = 180;
   const paddingY = 90;
-  const width = stepCount * fixedStepWidth + paddingY;
+  const width = Math.max(1000, stepCount * fixedStepWidth + paddingY);
   const height = 400;
 
   useEffect(() => {
@@ -318,7 +318,7 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
       className='bg-white rounded-2xl p-6 shadow-sm w-full overflow-x-auto'
       ref={containerRef}
     >
-      <div className='w-full relative'>
+      <div className='w-full relative flex justify-center'>
         <canvas
           ref={canvasRef}
           className='block cursor-crosshair'
