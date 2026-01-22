@@ -58,8 +58,12 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
 
   // Fixed dimensions for scrollable layout
   const stepCount = processedSteps.length;
-  const fixedStepWidth = 180;
+  const fixedStepWidth = 300;
   const paddingY = 90;
+  const barWidth = fixedStepWidth / 4;
+  const paddingTop = 60;
+  const chartHeight = 280;
+
   const width = Math.max(1000, stepCount * fixedStepWidth + paddingY);
   const height = 400;
 
@@ -80,16 +84,8 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
 
     ctx.clearRect(0, 0, width, height);
 
-    const stepCount = processedSteps.length;
     if (!stepCount) return;
 
-    const paddingTop = 60;
-    const chartHeight = 280;
-
-    const availableWidth = width - paddingY;
-    const stepWidth = availableWidth / stepCount;
-
-    const barWidth = fixedStepWidth / 2.5;
     const baselineY = paddingTop + chartHeight;
 
     const bars: {
@@ -103,7 +99,7 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
 
     for (let i = 0; i < stepCount; i++) {
       const step = processedSteps[i];
-      const centerX = paddingY / 2 + stepWidth * i + stepWidth / 2;
+      const centerX = paddingY / 2 + fixedStepWidth * i + fixedStepWidth / 2;
       const height = (step.percent / 100) * chartHeight;
       const x = centerX - barWidth / 2;
       const y = baselineY - height;
@@ -112,7 +108,7 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
       bars.push({ x, y, width: barWidth, height, centerX, radius });
     }
 
-    /* ================= FUNNEL SHAPE ================= */
+    // --- FUNNEL SHAPE ---
 
     if (bars.length > 1) {
       ctx.beginPath();
@@ -201,7 +197,7 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
 
       ctx.fillText(text, bar.centerX, bar.y - 4);
     });
-  }, [processedSteps, width]);
+  }, [processedSteps, width, barWidth, stepCount]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -220,12 +216,9 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
     const stepCount = processedSteps.length;
     if (!stepCount) return;
 
-    const paddingTop = 60;
-    const chartHeight = 280;
     const baselineY = paddingTop + chartHeight;
     const availableWidth = width - paddingY;
     const stepWidth = availableWidth / stepCount;
-    const barWidth = fixedStepWidth / 2.5;
 
     // Check if hovering over a bar or label area
     let foundBar = false;
@@ -318,7 +311,10 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
       className='bg-white rounded-2xl p-6 shadow-sm w-full overflow-x-auto'
       ref={containerRef}
     >
-      <div className='w-full relative flex justify-center'>
+      <div
+        className='w-full relative flex'
+        style={{ justifyContent: width > (containerRef.current?.offsetWidth || 0) ? "flex-start" : "center" }}
+      >
         <canvas
           ref={canvasRef}
           className='block cursor-crosshair'
@@ -359,15 +355,22 @@ export default function FunnelTwo({ data }: FunnelTwoProps) {
       </div>
 
       {/* Step labels below chart */}
-      <div className='flex justify-around mt-4 px-15'>
-        {processedSteps.map((step) => (
-          <span
-            key={step.label}
-            className='text-sm font-semibold text-gray-800'
-          >
-            {step.label}
-          </span>
-        ))}
+      <div
+        className='relative'
+        style={{ width: `${width}px`, marginLeft: "auto", marginRight: "auto" }}
+      >
+        {processedSteps.map((step, i) => {
+          const centerX = paddingY / 2 + fixedStepWidth * i + fixedStepWidth / 2;
+          return (
+            <span
+              key={step.label}
+              className='absolute text-sm font-semibold text-gray-800 transform -translate-x-1/2 bottom-0'
+              style={{ left: `${centerX}px` }}
+            >
+              {step.label}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
